@@ -53,3 +53,27 @@ def test_two_stage_tracker_beats_plain_lasso():
     w1, _ = tracking.weights_for_n_names(R, idx, 5)
     assert (w2 > 0).sum() <= 5 and w2.sum() == pytest.approx(1.0)
     assert tracking.evaluate(w2, R, idx)["tracking error"] <= tracking.evaluate(w1, R, idx)["tracking error"] + 1e-9
+
+
+def test_oos_r2_and_no_lookahead():
+    from sklearn.linear_model import LinearRegression
+    from finml import timing
+    idx = pd.date_range("2000-01-31", periods=240, freq="ME")
+    x = pd.Series(rng.normal(size=240), idx)
+    y = 0.5 * x + rng.normal(0, 0.1, 240)
+    X = x.to_frame("x")
+    f = timing.expanding_forecast(X, y, LinearRegression, start=60, refit=12)
+    hm = timing.historical_mean_forecast(y, 60)
+    assert f.iloc[:60].isna().all() and f.iloc[60:].notna().all()
+    assert timing.oos_r2(y, f, hm) > 0.9
+    assert timing.oos_r2(y, hm, hm) == pytest.approx(0.0)
+    # changing a future value must not change earlier forecasts
+    y2 = y.copy(); y2.iloc[-1] += 100
+    f2 = timing.expanding_forecast(X, y2, LinearRegression, start=60, refit=12)
+    assert np.allclose(f.iloc[:-1], f2.iloc[:-1], equal_nan=True)
+
+
+def test_timing_weights_bounds():
+    from finml import timing
+    w = timing.timing_weights(pd.Series([-0.01, 0.0, 0.01, 1.0]), pd.Series([0.002] * 4), cap=2.0)
+    assert list(w) == [0.0, 0.0, pytest.approx(0.01 / 0.006), 2.0]
