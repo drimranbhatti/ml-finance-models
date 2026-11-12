@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "finml"
+version = "1.0.0"
+description = "Machine learning for finance: PCA factor models, LASSO index tracking and tree-based regime classification"
+authors = [{ name = "Dr. Muhammad Imran Bhatti" }]
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.26", "pandas>=2.0", "scikit-learn>=1.3"]
+
+[project.optional-dependencies]
+notebooks = ["matplotlib>=3.8", "seaborn>=0.13", "yfinance>=0.2.40", "jupyter"]
+dev = ["pytest>=7"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
